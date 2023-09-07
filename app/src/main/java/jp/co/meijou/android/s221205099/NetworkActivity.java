@@ -3,6 +3,8 @@ package jp.co.meijou.android.s221205099;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.squareup.moshi.JsonAdapter;
@@ -35,10 +37,24 @@ public class NetworkActivity extends AppCompatActivity {
         binding = ActivityNetworkBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        var request = new Request.Builder()
-                .url("https://gist.stoic.jp/okhttp.json")
-                .build();
+        getImage("https://placehold.jp/61187c/fefb41/350x150.png?text=おうおうおうおう");
 
+        binding.button8.setOnClickListener(view -> {
+            var text = binding.editTextText3.getText().toString();
+
+            var url = Uri.parse("https://placehold.jp/3d4070/ff4015/800x1200.png")
+                    .buildUpon()
+                    .appendQueryParameter("text", text)
+                    .build()
+                    .toString();
+            getImage(url);
+        });
+    }
+
+    private void getImage(String url) {
+        var request = new Request.Builder()
+                .url(url)
+                .build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
@@ -46,13 +62,8 @@ public class NetworkActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                var gist = gistJsonAdapter.fromJson(response.body().source());
-
-                Optional.ofNullable(gist)
-                        .map(g -> g.files.get("OkHttp.txt"))
-                        .ifPresent(gistFile -> {
-                            runOnUiThread(() -> binding.gistContent.setText(gistFile.content));
-                        });
+                var bitmap = BitmapFactory.decodeStream(response.body().byteStream());
+                runOnUiThread(() -> binding.imageView.setImageBitmap(bitmap));
             }
         });
     }
